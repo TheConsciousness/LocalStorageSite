@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <title>Local Storage Dashboard</title>
-	<link rel="icon" type="image/x-icon" href="https://iconarchive.com/download/i81228/creative-freedom/free-vibrant/Database.ico">
+    <title>SQLite Dashboard</title>
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
 
     <!-- Bootstrap core CSS -->
@@ -138,19 +138,12 @@
 		};
 		async function refreshData() {
 			console.log("Refreshing data...");
-			document.getElementById("locStorage-table-loading-div").style.display = 'block';
+			document.getElementById("sql-table-loading-div").style.display = 'block';
 			
-			//const response = await fetch("http://127.0.0.1:8082/list", {method: "GET"})
-			//const data = await response.json();
-			
-			let data = JSON.parse(localStorage.getItem("TestTable"));
-			
+			const response = await fetch("http://127.0.0.1:8082/list", {method: "GET", headers: new Headers({'content-type': 'application/json'})})
+			const data = await response.json();
 			clearTable();
-			if (data) {
-				buildlocStorageTable(data);
-			} else {
-				console.log("No data in Local Storage: TestTable");
-			}
+			buildSqlTable(data);
 		}
 		async function submitRec() {
 			let fnameValue = document.getElementById("fname-input").value
@@ -158,28 +151,10 @@
 			let emailValue = document.getElementById("email-input").value
 			console.log("Submitting Record for: " + fnameValue + " " + lnameValue + " with email: " + emailValue + ".")
 			
-			//let insertUrl = "http://127.0.0.1:8082/insert" + "?fname=" + fnameValue + "&lname=" + lnameValue + "&email=" + emailValue
-			//const response = await fetch(insertUrl, {method: "POST"})
-			//const data = await response.json();
+			let insertUrl = "http://127.0.0.1:8082/insert" + "?fname=" + fnameValue + "&lname=" + lnameValue + "&email=" + emailValue
 			
-			let data = JSON.parse(localStorage.getItem("TestTable"));
-			let newRecord = {};
-			let lastId = 0;
-			
-			if (data.length < 1) { 
-				data = [];
-			} else {
-				lastId = data[data.length - 1]['id'] + 1;
-			}
-			
-			newRecord['id'] = lastId;
-			newRecord['fname'] = fnameValue;
-			newRecord['lname'] = lnameValue;
-			newRecord['email_addr'] = emailValue;
-			
-			data.push(newRecord);
-			localStorage.setItem("TestTable", JSON.stringify(data));
-			
+			const response = await fetch(insertUrl, {method: "POST"})
+			const data = await response.json();
 			document.getElementById("fname-input").value = ""
 			document.getElementById("lname-input").value = ""
 			document.getElementById("email-input").value = ""
@@ -187,61 +162,31 @@
 			refreshData();
 		}
 		async function searchRecs() {
-			let searchValue = document.getElementById("searchbox").value.toLowerCase();
+			let searchValue = document.getElementById("searchbox").value
 			
-			let data = JSON.parse(localStorage.getItem("TestTable"));
-			let searchResults = [];
+			let searchUrl = "http://127.0.0.1:8082/search" + "?value=" + searchValue
+			const response = await fetch(searchUrl, {method: "GET"})
+			const data = await response.json();
 			
-			if (!data) {
-				alert("No data to search for!")
-			} else {
-				data.forEach(element => {
-					// If the text values in the element contain the searchValue
-					if (Object.values(element).toString().toLowerCase().includes(searchValue)) {
-						// Add the whole element to searchresults list
-						searchResults.push(element);
-					}
-				});
-				clearTable();
-				buildlocStorageTable(searchResults);
-			}
+			clearTable();
+			buildSqlTable(data);
 		}
 		async function deleteRec(recId) {
-			let data = JSON.parse(localStorage.getItem("TestTable"));
-			
-			if (!data) {
-				alert("No data to delete from!")
-			} else {
-				for (a = 0; a < data.length; a++) {
-					if (data[a]['id'] == recId) {
-						data.splice(a, 1);
-					}
-				}
-				localStorage.setItem("TestTable", JSON.stringify(data));
-			}
-			
+			let deleteUrl = "http://127.0.0.1:8082/delete" + "?id=" + recId
+			const response = await fetch(deleteUrl, {method: "DELETE"})
+			const data = await response.json();
 			refreshData();
 		}
 		async function prepEditRecord(recId) {
 			clearModal();
+			const listOneUrl = "http://127.0.0.1:8082/listOne" + "?id=" + recId
+			const response = await fetch(listOneUrl, {method: "GET"})
+			const data = await response.json();
 			
-			let data = JSON.parse(localStorage.getItem("TestTable"));
-			
-			if (!data) {
-				alert("No data to delete from!")
-			} else {
-				for (a = 0; a < data.length; a++) {
-					if (data[a]['id'] == recId) {
-						document.getElementById("id-edit-input").value = data[a]['id'];
-						document.getElementById("fname-edit-input").value = data[a]['fname'];
-						document.getElementById("lname-edit-input").value = data[a]['lname'];
-						document.getElementById("email-edit-input").value = data[a]['email_addr'];
-						break;
-					}
-				}
-				localStorage.setItem("TestTable", JSON.stringify(data));
-			}
-			
+			document.getElementById("id-edit-input").value = data[0]['id'];
+			document.getElementById("fname-edit-input").value = data[0]['fname'];
+			document.getElementById("lname-edit-input").value = data[0]['lname'];
+			document.getElementById("email-edit-input").value = data[0]['email_addr'];
 		}
 		function clearModal() {
 			// Remove all values from the editbox modal
@@ -252,7 +197,7 @@
 		}
 		function clearTable() {
 			// Remove all rows from tbody
-			document.getElementById("locStorage-table-body").innerHTML = '';
+			document.getElementById("sql-table-body").innerHTML = '';
 		}
 		async function saveChanges() {
 			const recId = document.getElementById("id-edit-input").value;
@@ -260,33 +205,16 @@
 			const lnameEdit = document.getElementById("lname-edit-input").value;
 			const emailEdit = document.getElementById("email-edit-input").value;
 			
-			//let saveUrl = "http://127.0.0.1:8082/update" + "?id=" + recId + "&fname=" + fnameEdit + "&lname=" + lnameEdit + "&email=" + emailEdit
-			//const response = await fetch(saveUrl, {method: "PATCH"})
-			//const data = await response.json();
-			
-			let data = JSON.parse(localStorage.getItem("TestTable"));
-			
-			if (!data) {
-				alert("No record to edit!")
-			} else {
-				for (a = 0; a < data.length; a++) {
-					if (data[a]['id'] == recId) {
-						data[a]['fname'] = fnameEdit;
-						data[a]['lname'] = lnameEdit;
-						data[a]['email_addr'] = emailEdit;
-						break;
-					}
-				}
-				localStorage.setItem("TestTable", JSON.stringify(data));
-			}
-			
+			let saveUrl = "http://127.0.0.1:8082/update" + "?id=" + recId + "&fname=" + fnameEdit + "&lname=" + lnameEdit + "&email=" + emailEdit
+			const response = await fetch(saveUrl, {method: "PATCH"})
+			const data = await response.json();
 			var myModalEl = document.getElementById('edit-record-modal');
 			var modal = bootstrap.Modal.getInstance(myModalEl)
 			modal.hide();
 			refreshData();
 		}
-		function buildlocStorageTable(jsonData) {
-			var tbody = document.getElementById("locStorage-table-body");
+		function buildSqlTable(jsonData) {
+			var tbody = document.getElementById("sql-table-body");
 
 			for (var a = 0; a < jsonData.length; a++) {			
 				var row = tbody.insertRow(tbody.rows.length);
@@ -302,7 +230,7 @@
 				cell4.innerHTML = jsonData[a]['email_addr'];
 				cell5.innerHTML = '<button type="button" class="btn btn-danger btn-sm" onClick="deleteRec('+jsonData[a]['id']+')">Delete</button> <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-record-modal" onClick="prepEditRecord('+jsonData[a]['id']+')">Edit</button>'
 				
-				document.getElementById("locStorage-table-loading-div").style.display = 'none';
+				document.getElementById("sql-table-loading-div").style.display = 'none';
 			}
 		}
 	  </script>
@@ -310,7 +238,7 @@
     
 	<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
 
-	  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Local Storage Dashboard</a>
+	  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">SQLite Database</a>
 
 	  <input class="form-control form-control-dark w-100" type="text" placeholder="Search" id="searchbox" aria-label="Search" autocomplete="off">
 	</header>
@@ -324,10 +252,6 @@
 
 		<main class="col-md-10 ms-sm-auto col-lg-11 px-md-4">
 			<!--<canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>-->
-		
-		<br />
-		<p class="lead">This page represents the ease with which we can leverage Bootstrap, Javascript, and Local Storage to create a feature-filled web application using just 3 files.</p>
-			
 
 		<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">	
 		  <h2>TestTable View</h2>
@@ -338,9 +262,9 @@
 			  </div>
 			</div>
 		</div>
-		  <div class="table-responsive" id="locStorage-table-div">
+		  <div class="table-responsive" id="sql-table-div">
 			
-			<table class="table table-striped table-sm" id="locStorage-table">
+			<table class="table table-striped table-sm" id="sql-table">
 			  <thead>
 				<tr>
 				  <th scope="col">ID</th>
@@ -350,17 +274,17 @@
 				  <th scope="col">Actions</th>
 				</tr>
 			  </thead>
-			  <tbody id="locStorage-table-body">
+			  <tbody id="sql-table-body">
 				<tr>
-				  <td>1</td>
-				  <td>John</td>
-				  <td>Smith</td>
-				  <td>jsmith@email.com</td>
+				  <td>1,001</td>
+				  <td>random</td>
+				  <td>data</td>
+				  <td>placeholder</td>
 				  <td><button type="button" class="btn btn-danger btn-sm" onClick="deleteRec()">Delete</button> <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-record-modal" onClick="prepEditRecord()">Edit</button></td>
 				</tr>
 			  </tbody>
 			</table>
-			<div class="spinner-border text-primary" role="status" id="locStorage-table-loading-div" style="display:none">
+			<div class="spinner-border text-primary" role="status" id="sql-table-loading-div" style="display:none">
 			  <span class="visually-hidden">Loading...</span>
 			</div>
 		  </div>
@@ -394,6 +318,19 @@
 	  </div>
 	</div>
 
+	<script>
+		document.getElementById("searchbox").addEventListener("keyup", (event) => {
+			if (event.keyCode == 13) {
+				searchRecs();
+			}
+		});
+	</script>
+
+    <script src="bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
+
 	<div class="modal fade" id="edit-record-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
 		<div class="modal-dialog">
 			<div class="modal-content">
@@ -425,31 +362,6 @@
 			  </div>
 			</div>
 		</div>
-	</div>	
-
-	<script>
-		document.getElementById("searchbox").addEventListener("keyup", (event) => {
-			if (event.keyCode == 13) {
-				searchRecs();
-			}
-		});
-		document.getElementById("email-input").addEventListener("keyup", (event) => {
-			if (event.keyCode == 13) {
-				submitRec();
-			}
-		});
-		document.getElementById("email-edit-input").addEventListener("keyup", (event) => {
-			if (event.keyCode == 13) {
-				saveChanges();
-			}
-		});
-	</script>
-
-    <script src="bootstrap.bundle.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js" integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE" crossorigin="anonymous"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
-
-
+	</div>
   </body>
 </html>
