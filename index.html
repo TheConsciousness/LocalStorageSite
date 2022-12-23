@@ -166,7 +166,7 @@
 			let newRecord = {};
 			let lastId = 0;
 			
-			if (data.length < 1) { 
+			if (data === null || data === undefined) { 
 				data = [];
 			} else {
 				lastId = data[data.length - 1]['id'] + 1;
