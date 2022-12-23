@@ -255,6 +255,9 @@
 			// Remove all rows from tbody
 			document.getElementById("locStorage-table-body").innerHTML = '';
 		}
+		function resetValues() {
+			localStorage.removeItem("TestTable");
+		}
 		function saveChanges() {
 			const recId = document.getElementById("id-edit-input").value;
 			const fnameEdit = document.getElementById("fname-edit-input").value;
@@ -386,6 +389,8 @@
 		<nav id="sidebarMenu" class="col-md-2 col-lg-1 d-md-block bg-light sidebar collapse">
 		  <div class="position-sticky pt-3">
 		  </div>
+		  
+		  <p id= "ver" style="position: absolute;bottom: 0;padding-left: 10px;">v1.0</p>
 		</nav>
 
 		<main class="col-md-10 ms-sm-auto col-lg-11 px-md-4">
@@ -399,7 +404,7 @@
 		  <h2>TestTable View</h2>
 		  <div class="btn-toolbar mb-2 mb-md-0">
 			  <div class="btn-group me-2">
-				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="clearTable()">Clear</button>
+				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="resetValues();refreshData();">Clear</button>
 				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="refreshData()">Refresh</button>
 				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="exportData()" id="export-data-btn">Export</button>
 				<button type="file" class="btn btn-sm btn-outline-secondary" onClick="showUploadBox()" id="import-data-btn" accept=".json">Import</button>
@@ -432,6 +437,7 @@
 			<div class="spinner-border text-primary" role="status" id="locStorage-table-loading-div" style="display:none">
 			  <span class="visually-hidden">Loading...</span>
 			</div>
+			<br />
 		  </div>
 		  
 		  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
