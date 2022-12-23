@@ -136,13 +136,10 @@
 			console.log("Page is fully loaded");
 			refreshData();
 		};
-		async function refreshData() {
+		function refreshData() {
 			console.log("Refreshing data...");
 			document.getElementById("locStorage-table-loading-div").style.display = 'block';
-			
-			//const response = await fetch("http://127.0.0.1:8082/list", {method: "GET"})
-			//const data = await response.json();
-			
+						
 			let data = JSON.parse(localStorage.getItem("TestTable"));
 			
 			clearTable();
@@ -152,24 +149,24 @@
 				console.log("No data in Local Storage: TestTable");
 			}
 		}
-		async function submitRec() {
+		function submitRec() {
 			let fnameValue = document.getElementById("fname-input").value
 			let lnameValue = document.getElementById("lname-input").value
 			let emailValue = document.getElementById("email-input").value
 			console.log("Submitting Record for: " + fnameValue + " " + lnameValue + " with email: " + emailValue + ".")
 			
-			//let insertUrl = "http://127.0.0.1:8082/insert" + "?fname=" + fnameValue + "&lname=" + lnameValue + "&email=" + emailValue
-			//const response = await fetch(insertUrl, {method: "POST"})
-			//const data = await response.json();
 			
 			let data = JSON.parse(localStorage.getItem("TestTable"));
 			let newRecord = {};
 			let lastId = 0;
 			
-			if (data === null || data === undefined) { 
+			if (data === null || data === undefined || data == "") { 
 				data = [];
 			} else {
-				lastId = data[data.length - 1]['id'] + 1;
+				if (typeof data[data.length - 1]['id'] == 'undefined') {
+				} else {
+					lastId = data[data.length - 1]['id'] + 1;
+				}
 			}
 			
 			newRecord['id'] = lastId;
@@ -186,7 +183,7 @@
 			
 			refreshData();
 		}
-		async function searchRecs() {
+		function searchRecs() {
 			let searchValue = document.getElementById("searchbox").value.toLowerCase();
 			
 			let data = JSON.parse(localStorage.getItem("TestTable"));
@@ -206,7 +203,7 @@
 				buildlocStorageTable(searchResults);
 			}
 		}
-		async function deleteRec(recId) {
+		function deleteRec(recId) {
 			let data = JSON.parse(localStorage.getItem("TestTable"));
 			
 			if (!data) {
@@ -217,12 +214,16 @@
 						data.splice(a, 1);
 					}
 				}
-				localStorage.setItem("TestTable", JSON.stringify(data));
+				if (data.length < 1) {
+					localStorage.removeItem("TestTable");
+				} else {
+					localStorage.setItem("TestTable", JSON.stringify(data));
+				}
 			}
 			
 			refreshData();
 		}
-		async function prepEditRecord(recId) {
+		function prepEditRecord(recId) {
 			clearModal();
 			
 			let data = JSON.parse(localStorage.getItem("TestTable"));
@@ -254,16 +255,12 @@
 			// Remove all rows from tbody
 			document.getElementById("locStorage-table-body").innerHTML = '';
 		}
-		async function saveChanges() {
+		function saveChanges() {
 			const recId = document.getElementById("id-edit-input").value;
 			const fnameEdit = document.getElementById("fname-edit-input").value;
 			const lnameEdit = document.getElementById("lname-edit-input").value;
 			const emailEdit = document.getElementById("email-edit-input").value;
-			
-			//let saveUrl = "http://127.0.0.1:8082/update" + "?id=" + recId + "&fname=" + fnameEdit + "&lname=" + lnameEdit + "&email=" + emailEdit
-			//const response = await fetch(saveUrl, {method: "PATCH"})
-			//const data = await response.json();
-			
+						
 			let data = JSON.parse(localStorage.getItem("TestTable"));
 			
 			if (!data) {
@@ -305,6 +302,75 @@
 				document.getElementById("locStorage-table-loading-div").style.display = 'none';
 			}
 		}
+		
+		function showUploadBox() {
+			document.getElementById("import-data-file").style.display = 'block';
+			document.getElementById("import-data-file").click();
+		}
+		function handleUpload() {
+			const file = document.getElementById("import-data-file").files[0];
+			
+			if (file.name.slice(-5) != ".json") {
+				alert("JSON files only please");
+				document.getElementById("import-data-file").value = "";
+				return;
+			}
+			
+			if (file) {
+				var reader = new FileReader();
+				reader.readAsText(file, "UTF-8");
+				reader.onload = function (evt) {
+					buildlocStorageTable(JSON.parse(evt.target.result));
+					localStorage.setItem("TestTable", evt.target.result);
+				}
+				reader.onerror = function (evt) {
+					console.error(evt);
+				}
+			}
+		}
+		function exportData() {
+			let data = JSON.parse(localStorage.getItem("TestTable"));
+			
+			if (data) {
+				var a = document.createElement("a");
+				var myFile = new Blob([JSON.stringify(data)], {type: 'application/json'});
+				window.URL = window.URL || window.webkitURL;
+				a.href = window.URL.createObjectURL(myFile, {type: "application/json"});
+				a.download = "LocalStorageSiteExport.json";
+				a.click();
+			} else alert("No data to export.");
+		}
+		function generateRandomString(length) {
+			const characters ='abcdefghijklmnopqrstuvwxyz';
+			let result = '';
+			const charactersLength = characters.length;
+			for ( let i = 0; i < length; i++ ) {
+				result += characters.charAt(Math.floor(Math.random() * charactersLength));
+			}
+			return result;
+		}
+		function createTestRecs() {
+			var lastId = 0;
+			let data = JSON.parse(localStorage.getItem("TestTable"));
+			
+			for (t = 0; t < 10; t++) {
+			
+				if (typeof data == 'undefined' || data == null) {
+					data = [];
+				} else {
+					lastId = data[data.length - 1]['id'] + 1;
+				}
+				var newRec = {};
+				newRec['id'] = lastId;
+				newRec['fname'] = generateRandomString(5);
+				newRec['lname'] = generateRandomString(12);
+				newRec['email_addr'] = generateRandomString(5) + "@" + generateRandomString(5) + "." + generateRandomString(3)
+				data.push(newRec);
+				localStorage.setItem("TestTable", JSON.stringify(data));
+			}
+			refreshData();
+		}		
+		
 	  </script>
   
     
@@ -335,6 +401,9 @@
 			  <div class="btn-group me-2">
 				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="clearTable()">Clear</button>
 				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="refreshData()">Refresh</button>
+				<button type="button" class="btn btn-sm btn-outline-secondary" onClick="exportData()" id="export-data-btn">Export</button>
+				<button type="file" class="btn btn-sm btn-outline-secondary" onClick="showUploadBox()" id="import-data-btn" accept=".json">Import</button>
+				<input type="file" class="btn btn-sm btn-outline-secondary" onChange="handleUpload()" id="import-data-file" accept=".json" style="display:none"/>
 			  </div>
 			</div>
 		</div>
@@ -387,6 +456,7 @@
 			  </div>
 			  <div class="col-12">
 				<button class="btn btn-primary" type="button" onClick="submitRec()">Submit Record</button>
+				<button class="btn btn-secondary" type="button" onClick="createTestRecs()">Create 10 Test Records</button>
 			  </div>
 			</form>
 			</div>
