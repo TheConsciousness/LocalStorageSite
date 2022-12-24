@@ -343,7 +343,8 @@
 				a.click();
 			} else alert("No data to export.");
 		}
-		function generateRandomString(length) {
+		function generateRandomString(length) {	
+		
 			const characters ='abcdefghijklmnopqrstuvwxyz';
 			let result = '';
 			const charactersLength = characters.length;
@@ -353,6 +354,10 @@
 			return result;
 		}
 		function createTestRecs() {
+			const lastNameArray = ["Nelson", "Robinson", "Love", "Anderson", "Huff", "Gamble", "Werner", "Brandis", "Hawkins", "Smith", "Johnson", "Brady", "Hancock", "Landry"];
+			const firstNameArray = ["Sarah", "Mike", "Cameron", "Kane", "Augustus", "Fletcher", "Noah", "Wayne", "Lukas", "Howard", "Delilah", "Lauren", "Violet", "Jamiya", "Julie", "Rebecca", "Tanya", "Morgan", "Stephanie", "Alina"];
+			const emailArray = ["gmail.com", "hotmail.com", "yahoo.com", "comcast.net"];
+			
 			var lastId = 0;
 			let data = JSON.parse(localStorage.getItem("TestTable"));
 			
@@ -365,9 +370,9 @@
 				}
 				var newRec = {};
 				newRec['id'] = lastId;
-				newRec['fname'] = generateRandomString(5);
-				newRec['lname'] = generateRandomString(12);
-				newRec['email_addr'] = generateRandomString(5) + "@" + generateRandomString(5) + "." + generateRandomString(3)
+				newRec['fname'] = firstNameArray[Math.floor(Math.random() * firstNameArray.length)];
+				newRec['lname'] = lastNameArray[Math.floor(Math.random() * lastNameArray.length)];
+				newRec['email_addr'] = (newRec['fname'] + "." + newRec['lname'] + "@" + emailArray[Math.floor(Math.random() * emailArray.length)]).toLowerCase();
 				data.push(newRec);
 				localStorage.setItem("TestTable", JSON.stringify(data));
 			}
@@ -390,7 +395,7 @@
 		  <div class="position-sticky pt-3">
 		  </div>
 		  
-		  <p id= "ver" style="position: absolute;bottom: 0;padding-left: 10px;">v1.0</p>
+		  <p id="ver" style="position: absolute;bottom: 0;padding-left: 10px;">v1.0.1</p>
 		</nav>
 
 		<main class="col-md-10 ms-sm-auto col-lg-11 px-md-4">
